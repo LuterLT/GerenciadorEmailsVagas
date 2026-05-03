@@ -1,0 +1,128 @@
+{
+  "name": "gerenciadorEmails",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Extraia vagas de emprego do HTML fornecido.\nPara cada vaga, retorne um JSON array com exatamente os seguintes campos:\n\n- titulo\n- empresa\n- local\n- link\n\nRegras importantes:\n- Retorne APENAS o JSON array, sem texto adicional, sem blocos de código markdown\n- Use apenas os links fornecidos na lista \"Links\"\n- Cada vaga deve ter apenas um link\n- Não invente informações\n- Se algum campo não existir, retorne string vazia \"\"\n- Ignore qualquer conteúdo que não seja vaga\n\nHTML:\n{{ $json.text }}\n\nLinks:\n{{ $json.links }}",
+        "hasOutputParser": true,
+        "needsFallback": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [1280, -272],
+      "id": "f3b3bd75-b995-4531-b324-8d4d649b2d3e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [1280, -96],
+      "id": "ed6aa371-c14b-4b5f-8854-00d3cf74afb1",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "jsCode": "// código mantido igual..."
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1632, -272],
+      "id": "830654ba-f02b-462f-a348-9b9a73e4b0b1",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "options": {
+          "numberOfItems": -1
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserItemList",
+      "typeVersion": 1,
+      "position": [1472, -96],
+      "id": "f2b2f6c1-ea54-4842-8f34-ff37f380219e",
+      "name": "Item List Output Parser"
+    },
+    {
+      "parameters": {
+        "model": "groq/compound",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [1376, -96],
+      "id": "735bd990-46c7-4800-be19-c52834ff83ff",
+      "name": "Groq Chat Model"
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "sheetName": {
+          "value": "Página1",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Vaga": "={{ $json.titulo }}",
+            "Empresa": "={{ $json.empresa }}",
+            "Local": "={{ $json.local }}",
+            "Link": "={{ $json.link }}",
+            "Data": "={{ new Date($('Get many messages').item.json.date).toLocaleDateString('pt-BR') }}"
+          },
+          "matchingColumns": ["Link"]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [1824, -272],
+      "id": "da2e4176-a34f-4a24-b340-eca792d937cb",
+      "name": "Append or update row in sheet"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "simple": false,
+        "filters": {
+          "q": "={{ 'newer_than:1d' }}",
+          "sender": "jobalerts-noreply@linkedin.com | jobs-listings@linkedin.com | jobs-noreply@linkedin.com"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [352, 0],
+      "id": "087f26d7-cfd9-4788-bbc2-4ff606f29ae3",
+      "name": "Get many messages"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23,
+              "triggerAtMinute": 40
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [160, 0],
+      "id": "21f5c46f-414a-47bb-9354-5cfdba5d364b",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "connections": {},
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Sao_Paulo"
+  }
+}
